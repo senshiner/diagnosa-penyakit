@@ -38,21 +38,56 @@ def render(isi):
     return render_template_string(BASE, isi=isi,
                                   n=len(DISEASES), m=len(SYMPTOMS))
 
-@app.route('/')
+@app.route('/', methods=['GET', 'POST'])
 def home():
+    if request.method == 'POST':
+        nama = request.form.get('nama', '').strip()
+        umur = request.form.get('umur', '').strip()
+        jk = request.form.get('jk', '')
+        if not nama or not umur or not jk:
+            return render('<p>Nama, umur, dan jenis kelamin wajib diisi.</p>'
+                          '<a class="btn" href="/">Kembali</a>')
+        session['pasien'] = {'nama': nama, 'umur': umur, 'jk': jk}
+        return redirect(url_for('metode'))
     isi = """
-    <h2>Pilih Metode</h2>
+    <h2>Data Pasien</h2>
+    <form method="post">
+    <p>Nama: <input type="text" name="nama" required></p>
+    <p>Umur: <input type="number" name="umur" min="1" max="120" required></p>
+    <p>Jenis kelamin:
+      <select name="jk" required>
+        <option value="">- pilih -</option>
+        <option value="Laki-laki">Laki-laki</option>
+        <option value="Perempuan">Perempuan</option>
+      </select></p>
+    <button type="submit" class="btn"
+            style="border:none;cursor:pointer;">Lanjut</button>
+    </form>
+    """
+    return render(isi)
+
+@app.route('/metode')
+def metode():
+    if 'pasien' not in session:
+        return redirect(url_for('home'))
+    p = session['pasien']
+    isi = f"""
+    <h2>Halo, {p['nama']}</h2>
+    <p>Pilih metode diagnosa:</p>
     <a class="btn" href="/forward">Forward Chaining (ceklist gejala)</a>
     <a class="btn" href="/backward">Backward Chaining (tanya jawab)</a>
     <h3>Tentang Dataset</h3>
-    <p>Sumber: """ + SOURCE + """. Berisi {{ n }} penyakit
-    dan {{ m }} gejala.</p>
-    """.replace('{{ n }}', str(len(DISEASES))).replace('{{ m }}', str(len(SYMPTOMS)))
+    <p>Sumber: {SOURCE}. Berisi {len(DISEASES)} penyakit
+    dan {len(SYMPTOMS)} gejala.</p>
+    """
     return render(isi)
 
 # ---------- Forward chaining: ceklist gejala ----------
 @app.route('/forward', methods=['GET', 'POST'])
 def forward():
+    if 'pasien' not in session:
+        return redirect(url_for('home'))
+    pasien = session['pasien']
     if request.method == 'POST':
         dipilih = set(request.form.getlist('gejala'))
         if not dipilih:
@@ -71,11 +106,13 @@ def forward():
         items = ''.join(f'<li>{tampil(g)}</li>' for g in sorted(cocok))
         isi = f"""
         <h2>Hasil Diagnosa</h2>
+        <p>Pasien: <b>{pasien['nama']}</b> ({pasien['umur']} tahun,
+           {pasien['jk']})</p>
         <p>Penyakit: <b>{penyakit}</b></p>
         <p>Gejala cocok: {skor}</p>
         <ul>{items}</ul>
         <p><i>Segera konsultasi ke dokter untuk kepastian.</i></p>
-        <a class="btn" href="/">Beranda</a>
+        <a class="btn" href="/">Diagnosa ulang</a>
         """
         return render(isi)
     kotak = ''.join(
@@ -114,6 +151,8 @@ def gejala_terbaik(kandidat):
 
 @app.route('/backward')
 def backward():
+    if 'pasien' not in session:
+        return redirect(url_for('home'))
     session['kandidat'] = sorted(DISEASES)
     session['ditanya'] = []
     return redirect(url_for('tanya'))
@@ -131,16 +170,19 @@ def tanya():
             kandidat = [p for p in kandidat if gejala not in DISEASES[p]]
         session['kandidat'] = kandidat
     if len(kandidat) <= 1 or len(ditanya) >= 15:
+        pasien = session.get('pasien', {'nama': '-', 'umur': '-', 'jk': '-'})
         if not kandidat:
             isi = '<h2>Hasil</h2><p>Tidak ditemukan penyakit yang cocok.</p>'
         else:
             p = kandidat[0]
             items = ''.join(f'<li>{tampil(g)}</li>'
                             for g in sorted(DISEASES[p]))
-            isi = (f'<h2>Hasil Diagnosa</h2><p>Penyakit: <b>{p}</b></p>'
+            isi = (f'<h2>Hasil Diagnosa</h2>'
+                   f'<p>Pasien: <b>{pasien["nama"]}</b></p>'
+                   f'<p>Penyakit: <b>{p}</b></p>'
                    f'<p>Gejala penyakit ini:</p><ul>{items}</ul>'
                    f'<p><i>Segera konsultasi ke dokter untuk kepastian.</i></p>')
-        return render(isi + '<a class="btn" href="/">Beranda</a>')
+        return render(isi + '<a class="btn" href="/">Diagnosa ulang</a>')
     gejala = gejala_terbaik(kandidat)
     # hindari tanya gejala yang sama dua kali
     if gejala in ditanya:
