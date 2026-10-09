@@ -16,15 +16,28 @@ app.secret_key = 'diagnosa-penyakit'
 BASE = """
 <html><head><title>Diagnosa Penyakit</title>
 <style>
-body { font-family: Arial; background: #f0f4f8; margin: 0; }
-.header { background: #19285a; color: white; text-align: center; padding: 20px; }
-.box { background: white; width: 85%; margin: 20px auto; padding: 20px;
-       border: 1px solid #ccc; }
-a.btn { display: inline-block; background: #19285a; color: white;
-        padding: 10px 20px; margin: 5px; text-decoration: none; }
+body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #e6f4f1;
+       margin: 0; color: #1f2937; }
+.header { background: linear-gradient(135deg, #0b6e64, #14b8a6);
+          color: white; text-align: center; padding: 28px 20px;
+          border-radius: 0 0 24px 24px;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+.header h1 { margin: 0 0 6px 0; letter-spacing: 1px; }
+.box { background: white; width: 85%; max-width: 900px; margin: 24px auto;
+       padding: 28px; border-radius: 16px;
+       box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+a.btn, button.btn { display: inline-block; background: #0d9488; color: white;
+        padding: 12px 26px; margin: 6px; text-decoration: none;
+        border-radius: 999px; font-weight: bold; border: none;
+        cursor: pointer; box-shadow: 0 2px 8px rgba(13,148,136,0.4); }
+a.btn:hover, button.btn:hover { background: #0b7c72; }
 .gejala { column-count: 3; }
-.footer { background: #19285a; color: white; text-align: center;
-          padding: 10px; font-size: 12px; }
+.gejala label { display: block; padding: 4px 0; }
+input[type=text], input[type=number], select {
+        padding: 10px; border-radius: 8px; border: 1px solid #9fd8d0; }
+.footer { background: #0b3f3a; color: #c8efe9; text-align: center;
+          padding: 14px; font-size: 12px; margin-top: 30px; }
+h2 { color: #0b6e64; }
 </style></head>
 <body>
 <div class="header"><h1>Diagnosa Penyakit</h1>
